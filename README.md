@@ -4,6 +4,29 @@
 
 I like rigorous validation, honest failure analysis, and shipping things that actually work — not demos.
 
+<p align="left">
+  <img src="https://komarev.com/ghpvc/?username=efebiskin&label=Profile%20views&color=0e75b6&style=flat" alt="profile views" />
+</p>
+
+---
+
+<p align="center">
+  <a href="https://github.com/efebiskin">
+    <img height="165" src="https://github-readme-stats.vercel.app/api?username=efebiskin&show_icons=true&theme=tokyonight&hide_border=true&count_private=true&include_all_commits=true" alt="GitHub stats" />
+  </a>
+  <a href="https://github.com/efebiskin">
+    <img height="165" src="https://github-readme-stats.vercel.app/api/top-langs/?username=efebiskin&layout=compact&theme=tokyonight&hide_border=true&langs_count=8" alt="Top languages" />
+  </a>
+</p>
+
+<p align="center">
+  <img src="https://github-readme-streak-stats.herokuapp.com/?user=efebiskin&theme=tokyonight&hide_border=true" alt="GitHub streak" />
+</p>
+
+<p align="center">
+  <img src="https://github-profile-trophy.vercel.app/?username=efebiskin&theme=tokyonight&no-frame=true&no-bg=true&margin-w=6&column=7" alt="GitHub trophies" />
+</p>
+
 ---
 
 ## What I'm building
