@@ -24,7 +24,7 @@
     <img height="165" src="https://github-readme-stats.vercel.app/api?username=efebiskin&show_icons=true&theme=tokyonight&hide_border=true&count_private=true&include_all_commits=true" alt="GitHub stats" />
   </a>
   <a href="https://github.com/efebiskin">
-    <img height="165" src="https://github-readme-stats.vercel.app/api/top-langs/?username=efebiskin&layout=compact&theme=tokyonight&hide_border=true&langs_count=8" alt="Top languages" />
+    <img height="165" src="https://github-readme-stats.vercel.app/api/top-langs/?username=efebiskin&layout=compact&theme=tokyonight&hide_border=true&langs_count=10&exclude_repo=efebiskin&size_weight=0.5&count_weight=0.5&v=2" alt="Top languages" />
   </a>
 </p>
 
