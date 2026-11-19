@@ -45,7 +45,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/footer.svg" width="100%" alt="Footer: the terminal session exits with 'See you around.' A crowd of hand-drawn people (Open Peeps by Pablo Stanley, CC0) walks past a giant BISKIN. wordmark."/>
+  <a href="#"><img src="assets/footer.svg" width="100%" alt="Footer that scrolls itself: a 'Let's talk.' section (efebskn@gmail.com, LinkedIn, biskin.studio) slides up to reveal 'See you around.' and a giant BISKIN. wordmark, with Efe drawn standing in the middle of a walking crowd (Open Peeps by Pablo Stanley, CC0). Click to go back to the top."/></a>
 </p>
 
 <p align="center">

@@ -776,81 +776,180 @@ CROWD_HAIR_X = 430          # head centre in peep units (head group sits at x=22
 FOOTER_BOB = (22, 34)       # walk bounce, peep units
 
 
+FOOT_D = 16.0               # one loop: "Let's talk." → scroll down → footer → scroll back up
+
+# Efe's own figure, standing still in the middle of the crowd (Open Peeps parts, matched to his photos:
+# shoulder-length hair, trimmed full beard, black top, light pants). Change a name here to restyle him.
+EFE = {"body": "CrossedArmsBW", "hair": "MediumLong", "face": "Serious", "facialHair": "Full", "accessories": None}
+
+
 def build_footer():
-    H, PT = 470, 196                       # panel height, top of the cream crowd panel
+    """The README's last panel. GitHub images can't see the page scroll, so the panel scrolls itself:
+    a 'Let's talk.' section slides up and uncovers the footer, whose crowd panel sits fixed underneath
+    (the sticky-footer reveal), holds, then scrolls back and loops seamlessly."""
+    H, PT = 560, 196                       # window height, top of the cream crowd panel
+    SEC, BAND = 470, 160                   # page heights: contact section, footer band (scroll = SEC)
     INK, PAPER, WORD = "#0A0A0A", "#FFFDF7", "#E4DDCB"
+    CROWD_INK = "#8E9184"                  # the crowd is drawn in grey so Efe is the only full-contrast figure
+    D = FOOT_D
     pp = json.loads((ROOT / "scripts" / "peeps.json").read_text(encoding="utf-8"))
     rnd = random.Random(2026)              # fixed seed: the same crowd every build, no daily diff
-    ids = Ids("f")
-    defs, body, used = [], [], set()
-
-    # dark band: the session ends
-    c, t, end, x_end = typed(ids, [("efe@biskin", LIME), (" ~ $ ", MUTED), ("exit", CREAM)], 15, 32, 74, 0.3)
-    defs.append(c); body.append(t)
-    lo, _ = P(MONO, "logout · thanks for scrolling this far.", 12, 32, 98, MUTED)
-    body.append(f'<g class="fade" style="animation-delay:{end + 0.15:.2f}s">{lo}</g>')
-    see, _ = segs(HEAVY, [("See you ", CREAM), ("around.", LIME)], 50, 30, 160)
-    body.append(f'<g class="up" style="animation-delay:{end + 0.35:.2f}s">{see}</g>')
-    meta = [("biskin.studio", CREAM), ("linkedin.com/in/efe-biskin-923397400", MUTED),
-            ("efebskn@gmail.com", MUTED), ("crowd: Open Peeps by Pablo Stanley, CC0", DIM)]
-    for i, (txt, col) in enumerate(meta):
-        p, _ = P(MONO, txt, 11.5, W - 32, 92 + i * 20, col, anchor="end")
-        body.append(f'<g class="fade" style="animation-delay:{end + 0.5 + i * 0.1:.2f}s">{p}</g>')
-
-    # cream panel + giant wordmark behind the crowd
-    body.append(f'<rect y="{PT}" width="{W}" height="{H - PT}" fill="{CREAM}"/>')
-    size = DISPLAY.fit("BISKIN.", 400, W - 40)
-    base = PT + 18 + size * 0.73
-    wm, ww = P(DISPLAY, "BISKIN", size, 20, base, WORD)
-    dot, _ = P(DISPLAY, ".", size, 20 + ww, base, LIME)
-    body.append(f'<g class="up" style="animation-delay:{end + 0.2:.2f}s">{wm}{dot}</g>')
+    defs, used = [], set()
+    ez = "cubic-bezier(.65,0,.35,1)"
+    css = (
+        # the page scroll: hold top 0-2.0 s, down 2.0-3.8, hold 3.8-13.6, up 13.6-15.2, hold
+        f"@keyframes kS{{0%{{transform:translateY(0px)}}12.5%{{transform:translateY(0px);animation-timing-function:{ez}}}"
+        f"23.75%,85%{{transform:translateY(-{SEC}px)}}85%{{animation-timing-function:{ez}}}95%,100%{{transform:translateY(0px)}}}}"
+        # "See you around." words rise as the band lands, drop out of sight once it has left
+        f"@keyframes kW{{0%,20%{{transform:translateY(60px);animation-timing-function:cubic-bezier(.34,1.45,.64,1)}}"
+        f"25.5%,94.9%{{transform:translateY(0px)}}95%,100%{{transform:translateY(60px)}}}}"
+        "@keyframes kH{0%,100%{transform:translateY(0px)}50%{transform:translateY(5px)}}"
+        "@keyframes kT{0%,22%{transform:scale(0)}26%{transform:scale(1.12)}28%,90%{transform:scale(1)}93%,100%{transform:scale(0)}}"
+        f".fs{{animation:kS {D}s infinite both}}.fw{{animation:kW {D}s infinite both}}"
+        ".fh{animation:kH 1.4s ease-in-out infinite}"
+        f".ft{{transform-box:fill-box;transform-origin:0% 50%;animation:kT {D}s infinite both}}"
+        f"@media (prefers-reduced-motion:reduce){{.fs{{animation:none;transform:translateY(-{SEC}px)}}"
+        ".fw,.ft,.fh{animation:none}}"
+    )
 
     # parts become shared <g> defs; every peep is a few <use>s, so repeats cost nothing
     def part(cat, name):
         key = f"pp-{cat}-{name}"
         if key not in used and pp[cat][name]:
             used.add(key)
-            frag = pp[cat][name].replace("{FG}", INK).replace("{BG}", "currentColor")
+            frag = pp[cat][name].replace("{FG}", CROWD_INK).replace("{BG}", "currentColor")
             defs.append(f'<g id="{key}">{frag}</g>')
         return f'<use href="#{key}"/>' if pp[cat][name] else ""
 
-    def peep(kind, x, y, s, lime):
-        bodyname = rnd.choice(list(pp[kind]))
-        col = LIME if lime else PAPER
-        head = (f'<g transform="translate(225 0)" color="{col}">{part("hair", rnd.choice(list(pp["hair"])))}'
-                f'<g transform="translate(159 186)">{part("face", rnd.choice(list(pp["face"])))}</g>')
-        if rnd.random() < 0.35:
-            head += f'<g transform="translate(123 338)">{part("facialHair", rnd.choice(list(pp["facialHair"])[1:]))}</g>'
-        if rnd.random() < 0.3:
-            head += f'<g transform="translate(47 241)">{part("accessories", rnd.choice(list(pp["accessories"])[1:]))}</g>'
-        head += "</g>"
-        dur = rnd.uniform(0.9, 1.35)
-        bob = rnd.uniform(*FOOTER_BOB)
-        anim = (f'<animateTransform attributeName="transform" type="translate" values="0 0;0 {-bob:.0f};0 0" '
-                f'keyTimes="0;.5;1" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1" dur="{dur:.2f}s" '
-                f'begin="-{rnd.uniform(0, dur):.2f}s" repeatCount="indefinite"/>')
-        return (f'<g transform="translate({x - CROWD_HAIR_X * s:.1f} {y:.1f}) scale({s})"><g>{anim}'
-                f'<g color="{col}">{part(kind, bodyname)}</g>{head}</g></g>')
+    def figure(body, hair, face, fh, acc, col):
+        head = (f'<g transform="translate(225 0)" color="{col}">{part("hair", hair)}'
+                f'<g transform="translate(159 186)">{part("face", face)}</g>')
+        if fh:
+            head += f'<g transform="translate(123 338)">{part("facialHair", fh)}</g>'
+        if acc:
+            head += f'<g transform="translate(47 241)">{part("accessories", acc)}</g>'
+        return f'<g color="{col}">{part(body[0], body[1])}</g>{head}</g>'
 
-    def row(rid, L, gap, s, top, kinds, lime_p):
+    crowd_hair = [h for h in pp["hair"] if h != EFE["hair"]]   # his hair stays his
+
+    def spec(kind, x, y, s, lime):
+        dur = rnd.uniform(0.9, 1.35)
+        return dict(body=(kind, rnd.choice(list(pp[kind]))), hair=rnd.choice(crowd_hair),
+                    face=rnd.choice(list(pp["face"])),
+                    fh=rnd.choice(list(pp["facialHair"])[1:]) if rnd.random() < 0.35 else None,
+                    acc=rnd.choice(list(pp["accessories"])[1:]) if rnd.random() < 0.3 else None,
+                    x=x, y=y, s=s, col=LIME if lime else PAPER, dur=dur,
+                    bob=rnd.uniform(*FOOTER_BOB), phase=rnd.uniform(0, dur))
+
+    def render(p):
+        anim = (f'<animateTransform attributeName="transform" type="translate" values="0 0;0 {-p["bob"]:.0f};0 0" '
+                f'keyTimes="0;.5;1" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1" dur="{p["dur"]:.2f}s" '
+                f'begin="-{p["phase"]:.2f}s" repeatCount="indefinite"/>')
+        return (f'<g transform="translate({p["x"] - CROWD_HAIR_X * p["s"]:.1f} {p["y"]:.1f}) scale({p["s"]})"><g>{anim}'
+                f'{figure(p["body"], p["hair"], p["face"], p["fh"], p["acc"], p["col"])}</g></g>')
+
+    def row(L, gap, s, top, kinds, lime_p):
         out, x = [], rnd.uniform(0, gap)
         while x < L:
-            kind = rnd.choice(kinds)
-            out.append(peep(kind, x, top + rnd.uniform(-8, 14), s, rnd.random() < lime_p))
+            out.append(spec(rnd.choice(kinds), x, top + rnd.uniform(-8, 14), s, rnd.random() < lime_p))
             x += gap * rnd.uniform(0.8, 1.2)
-        defs.append(f'<g id="{rid}">{"".join(out)}</g>')
+        return out
 
-    # back row: smaller, higher, slower (standing bodies only, so no torso ends above the edge)
-    L = 1400
-    sb, sf = 0.088, 0.118
-    row("pp-back", L, 64, sb, H - 1130 * sb - 48, ["standing"], 0.12)
-    row("pp-front", L, 86, sf, H - 1130 * sf + 6, ["bust", "bust", "standing"], 0.2)
-    for rid, dur in (("pp-back", 110), ("pp-front", 70)):
-        body.append(f'<g><animateTransform attributeName="transform" type="translate" from="{-L} 0" to="0 0" '
-                    f'dur="{dur}s" repeatCount="indefinite"/><use href="#{rid}"/><use href="#{rid}" x="{L}"/></g>')
+    # ── fixed layer: cream panel, BISKIN. wordmark, the walking crowd, and Efe standing still in the middle
+    size = DISPLAY.fit("BISKIN.", 400, W - 40)
+    base = PT + 18 + size * 0.73
+    wm, ww = P(DISPLAY, "BISKIN", size, 20, base, WORD)
+    dot, _ = P(DISPLAY, ".", size, 20 + ww, base, LIME)
+    L, sb, sf = 1400, 0.095, 0.125
+    rows = [(row(L, 66, sb, 330, ["standing"], 0.06), 110),
+            (row(L, 90, sf, H - 1130 * sf + 6, ["bust", "bust", "standing"], 0.1), 70)]
+    crowd = []
+    for specs, dur in rows:
+        strip = "".join(render(p) for p in specs)
+        crowd.append(f'<g><animateTransform attributeName="transform" type="translate" from="{-L} 0" to="0 0" '
+                     f'dur="{dur}s" repeatCount="indefinite"/>{strip}<g transform="translate({L} 0)">{strip}</g></g>')
+    breathe = (f'<animateTransform attributeName="transform" type="translate" values="0 0;0 -12;0 0" keyTimes="0;.5;1" '
+               f'calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1" dur="2.6s" repeatCount="indefinite"/>')
+    av_file = ROOT / "scripts" / "efe_avatar.json"
+    if av_file.exists():                   # his own drawing, traced by scripts/trace_avatar.py
+        av = json.loads(av_file.read_text(encoding="utf-8"))
+        tall = H - PT - 22                 # head near the wordmark, sneakers on the bottom edge
+        es = tall / av["h"]
+        ex, ey = W / 2 - av["w"] * es / 2, H - 4 - tall
+        efe = (f'<g transform="translate({ex:.1f} {ey:.1f}) scale({es:.4f})"><g>{breathe}'
+               f'<path d="{av["paper"]}" fill="{PAPER}"/>'
+               + (f'<path d="{av["dark"]}" fill="{INK}" fill-rule="evenodd"/>' if av.get("dark") else "")
+               + (f'<path d="{av["hl"]}" fill="{PAPER}" fill-opacity=".5" fill-rule="evenodd"/>' if av.get("hl") else "")
+               + f'<path d="{av["ink"]}" fill="{INK}" fill-rule="evenodd"/></g></g>')
+    else:                                  # fallback: an Open Peeps stand-in
+        es = 0.108
+        ex, ey = W / 2 - CROWD_HAIR_X * es, H - 4 - 2935 * es
+        efe = (f'<g transform="translate({ex:.1f} {ey:.1f}) scale({es})"><g>{breathe}'
+               f'{figure(("standing", EFE["body"]), EFE["hair"], EFE["face"], EFE["facialHair"], EFE["accessories"], PAPER)}</g></g>')
+    # lime name tag beside his head, pointing at him (the footer band covers anything above the panel)
+    tag_t, tag_w = P(MONOB, "efe", 13, 0, 0, BG)
+    tw = tag_w + 22
+    hx = ex + (av["w"] * 0.86 if av_file.exists() else 560) * es + 14     # just right of the hair
+    hy = ey + (av["h"] * 0.07 if av_file.exists() else 300) * es
+    tag = (f'<g transform="translate({hx:.1f} {hy:.1f})"><g class="ft"><g class="fh">'   # position outside the animated groups
+           f'<path d="M0 12 L9 5 L9 19 Z" fill="{LIME}"/>'
+           f'<rect x="8" width="{tw:.1f}" height="24" rx="12" fill="{LIME}"/>'
+           f'<g transform="translate(19 17)">{tag_t}</g></g></g></g>')
+    fixed = (f'<rect y="{PT}" width="{W}" height="{H - PT}" fill="{CREAM}"/>{wm}{dot}'
+             f'{crowd[0]}{crowd[1]}{efe}{tag}')
 
-    inner = "<defs>" + "".join(defs) + "</defs>" + "\n".join(body)
-    return window(W, H, "efe@biskin: ~ — exit", inner, "", "f")
+    # ── scrolling layer: the contact section, then the footer band (opaque, slides up over the panel)
+    page = [f'<rect width="{W}" height="{SEC + BAND}" fill="{BG}"/><rect width="{W}" height="{SEC + BAND}" fill="url(#fdots)"/>']
+    parts = [("efe@biskin", LIME), (" ~ $ ", MUTED), ("cat contact.md", CREAM)]
+    tb, tw2 = segs(MONO, parts, 15, 32, 44)
+    n = sum(len(t) for t, _ in parts)
+    cw, t0, dt = tw2 / n, 0.3, 1 / 30
+    times = [0.0] + [t0 + k * dt for k in range(1, n + 1)] + [15.6]
+    vals = [0] + [k * cw + (3 if k == n else 0) for k in range(1, n + 1)] + [0]
+    defs.append(f'<clipPath id="ftype"><rect x="31" y="28" width="0" height="23">'
+                f'<animate attributeName="width" values="{";".join(num(v) for v in vals)}" '
+                f'keyTimes="{";".join(f"{t / D:.4f}" for t in times)}" dur="{D}s" repeatCount="indefinite" '
+                f'calcMode="discrete"/></rect></clipPath>')
+    page.append(f'<g clip-path="url(#ftype)">{tb}</g>')
+    talk, _ = segs(HEAVY, [("Let's ", CREAM), ("talk.", LIME)], 64, 30, 152)
+    page.append(talk)
+    left = [("Full-time role or a freelance build: my inbox is open.", MUTED, 13, 194),
+            ("→ efebskn@gmail.com", CREAM, 14, 240),
+            ("→ linkedin.com/in/efe-biskin-923397400", MUTED, 12.5, 264),
+            ("→ biskin.studio", MUTED, 12.5, 286)]
+    for txt, col, sz, y in left:
+        page.append(P(MONO, txt, sz, 32, y, col)[0])
+    page.append(P(MONO, "NOW", 11, 600, 120, DIM, track=2)[0])
+    for i, (txt, col) in enumerate([("▸ Biskin Studio · founder, full-stack", CREAM),
+                                    ("▸ BEF Games · shipped The Boss Gangster on Steam", CREAM),
+                                    ("▸ open to full-stack, ML and AI-agent roles", LIME)]):
+        page.append(P(MONO, txt, 12.5, 600, 148 + i * 26, col)[0])
+    hint, _ = P(MONO, "scroll ↓", 11.5, W / 2, 420, DIM, anchor="middle")
+    page.append(f'<g class="fh">{hint}</g>')
+    page.append(f'<rect y="{SEC}" width="{W}" height="1" fill="{EDGE}"/>')
+    # footer band (page y SEC … SEC+BAND)
+    b = SEC
+    page.append(segs(HEAVY, [("Efe", CREAM), (".", LIME)], 28, 30, b + 44)[0])
+    page.append(P(MONO, "full-stack engineer with ML chops.", 11.5, 32, b + 64, MUTED)[0])
+    page.append(P(MONO, "GET IN TOUCH", 10.5, 470, b + 34, DIM, track=1.5)[0])
+    page.append(P(MONO, "efebskn@gmail.com", 12, 470, b + 54, CREAM)[0])
+    page.append(P(MONO, "© 2026 Efecan Biskin", 11, 470, b + 72, MUTED)[0])
+    for i, (txt, col) in enumerate([("biskin.studio", CREAM), ("crowd: Open Peeps by Pablo Stanley, CC0", DIM)]):
+        page.append(P(MONO, txt, 11, W - 32, b + 34 + i * 18, col, anchor="end")[0])
+    defs.append(f'<clipPath id="fwords"><rect x="0" y="{b + 92}" width="{W}" height="66"/></clipPath>')
+    words, x = [], 30.0
+    for i, (wd, col) in enumerate([("See", CREAM), ("you", CREAM), ("around.", LIME)]):
+        p, w = P(HEAVY, wd, 50, x, b + 140, col)
+        words.append(f'<g class="fw" style="animation-delay:{i * 0.09:.2f}s">{p}</g>')
+        x += w + HEAVY.width(" ", 50)
+    page.append(f'<g clip-path="url(#fwords)">{"".join(words)}</g>')
+    page.append(P(MONO, "back to top ↑", 11.5, W - 32, b + 138, MUTED, anchor="end")[0])
+
+    defs.append(f'<clipPath id="fview"><rect y="37" width="{W}" height="{H - 37}"/></clipPath>')
+    body = (f'<g clip-path="url(#fview)">{fixed}'
+            f'<g transform="translate(0 36)"><g class="fs">{"".join(page)}</g></g></g>')
+    inner = "<defs>" + "".join(defs) + "</defs>" + body
+    return window(W, H, "efe@biskin: ~/contact.md", inner, css, "f")
 
 
 # ───────────────────────────── main ─────────────────────────────
