@@ -1,0 +1,40 @@
+name: rebuild profile panels
+
+on:
+  schedule:
+    - cron: "17 13 * * *"   # daily, 06:17 PT
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - ".github/workflows/profile.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: profile-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install fonttools==4.62.1 pillow==11.3.0
+      - run: python scripts/build.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: commit if anything changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets scripts/avatar.png
+          if git diff --cached --quiet; then echo "no changes"; exit 0; fi
+          git commit -m "chore: refresh profile panels"
+          git push
